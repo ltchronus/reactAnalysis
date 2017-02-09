@@ -12,7 +12,7 @@ react整体项目目录结构browserify前全部平级化了，详细看
 
 ###  Part 1 ReactDom.render
 
-我们从React 渲染开始研究
+我们从React 初次渲染开始研究
 
 ```javascript
 class App extends React.Component {
@@ -209,7 +209,13 @@ CompositeComponent的type为object，且组件类型一直就返回为true
 如果不能就更新就unmount掉。
 
 接着往下看，没有prevComponent和有而不能更新的话就执行ReactMount._renderNewRootComponent,
-这个方法中最重要的就是调用 
+这个方法中
+* 实例化componentInstance
+```javascript
+var componentInstance = instantiateReactComponent(nextElement, false);
+``` 
+
+调用ReactUpdates.batchedUpdates去更新相应view
 ```javascript
 // The initial render is synchronous but any updates that happen during
 // rendering, in componentWillMount or componentDidMount, will be batched
@@ -223,3 +229,75 @@ ReactUpdates.batchedUpdates(
   context
 );
 ```
+
+instantiateReactComponent就是工厂方法，无论是Text, 空，ReactHostComponent，ReactCompositeComponent
+丢进去都能返回相应的internalInstance
+```javascript
+/**
+ * Given a ReactNode, create an instance that will actually be mounted.
+ *
+ * @param {ReactNode} node
+ * @param {boolean} shouldHaveDebugID
+ * @return {object} A new instance of the element's constructor.
+ * @protected
+ */
+function instantiateReactComponent(node, shouldHaveDebugID) {
+  var instance;
+
+  if (node === null || node === false) {
+    instance = ReactEmptyComponent.create(instantiateReactComponent);
+  } else if (typeof node === 'object') {
+    var element = node;
+    var type = element.type;
+    if (
+      typeof type !== 'function' &&
+      typeof type !== 'string'
+    ) {
+      var info = '';
+
+      info += getDeclarationErrorAddendum(element._owner);
+      invariant(
+        false,
+        'Element type is invalid: expected a string (for built-in components) ' +
+        'or a class/function (for composite components) but got: %s.%s',
+        type == null ? type : typeof type,
+        info,
+      );
+    }
+
+    // Special case string values
+    if (typeof element.type === 'string') {
+      instance = ReactHostComponent.createInternalComponent(element);
+    } else if (isInternalComponentType(element.type)) {
+      // This is temporarily available for custom components that are not string
+      // representations. I.e. ART. Once those are updated to use the string
+      // representation, we can drop this code path.
+      instance = new element.type(element);
+
+      // We renamed this. Allow the old name for compat. :(
+      if (!instance.getHostNode) {
+        instance.getHostNode = instance.getNativeNode;
+      }
+    } else {
+      instance = new ReactCompositeComponentWrapper(element);
+    }
+  } else if (typeof node === 'string' || typeof node === 'number') {
+    instance = ReactHostComponent.createInstanceForText(node);
+  } else {
+    invariant(
+      false,
+      'Encountered invalid React node of type %s',
+      typeof node
+    );
+  }
+
+  // These two fields are used by the DOM and ART diffing algorithms
+  // respectively. Instead of using expandos on components, we should be
+  // storing the state needed by the diffing algorithms elsewhere.
+  instance._mountIndex = 0;
+  instance._mountImage = null;
+
+  return instance;
+}
+```
+
