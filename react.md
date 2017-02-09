@@ -11,17 +11,17 @@ react整体项目目录结构browserify前全部平级化了，详细看
 [react模块系统](https://leozdgao.me/react-global-module-system/)
 ### ReactDom.render
 我们从React 渲染开始研究
-```
+```javascript
 class App extends React.Component {
   render() {
     return <div> test</div>;
   }
 }
-ReactDom.render(App, document.querySelector('#id'));
+ReactDom.render(<App />, document.querySelector('#id'));
 ```
 文件在 react/src/renderers/dom/stack/client/ReactMount.js
 注意render方法其实是接受cb的
-```
+```javascript
   /**
    * Renders a React component into the DOM in the supplied `container`.
    * See https://facebook.github.io/react/docs/react-dom.html#render
@@ -113,18 +113,18 @@ _renderSubtreeIntoContainer: function(parentComponent, nextElement, container, c
 ```
 
 其中
-```
+```javascript
 var nextWrappedElement = React.createElement(
   TopLevelWrapper,
   { child: nextElement }
 );
 ```
 为rootComponent创建react element
-```
+```javascript
 var prevComponent = getTopLevelWrapperInContainer(container);
 ```
 因为我们是服务端渲染的 getTopLevelWrapperInContainer(container)得出prevComponent为空
-```
+```javascript
 if (prevComponent) {
   var prevWrappedElement = prevComponent._currentElement;
   var prevElement = prevWrappedElement.props.child;
@@ -148,7 +148,7 @@ if (prevComponent) {
 ```
 如果prevComponent不为空的情况，会判断是否要update component
 shouldUpdateReactComponent逻辑为
-```
+```javascript
 /**
  * Given a `prevElement` and `nextElement`, determines if the existing
  * instance should be updated as opposed to being destroyed or replaced by a new
@@ -182,7 +182,7 @@ CompositeComponent的type为object，且组件类型一直就返回为true
 
 返回true之后拿到PublicInstance，PublicInstance为user-defined component 的实例
 判断是否有cb,去执行cb,然后执行ReactMount._updateRootComponent
-```
+```javascript
   /**
    * Take a component that's already mounted into the DOM and replace its props
    * @param {ReactComponent} prevComponent component instance already in the DOM
@@ -207,7 +207,7 @@ CompositeComponent的type为object，且组件类型一直就返回为true
 
 接着往下看，没有prevComponent和有而不能更新的话就执行ReactMount._renderNewRootComponent,
 这个方法中最重要的就是调用 
-```js
+```javascript
 // The initial render is synchronous but any updates that happen during
 // rendering, in componentWillMount or componentDidMount, will be batched
 // according to the current batching strategy.
