@@ -9,8 +9,11 @@
 [reconciliation](https://facebook.github.io/react/docs/reconciliation.html)
 react整体项目目录结构browserify前全部平级化了，详细看
 [react模块系统](https://leozdgao.me/react-global-module-system/)
-### ReactDom.render
+
+###  Part 1 ReactDom.render
+
 我们从React 渲染开始研究
+
 ```javascript
 class App extends React.Component {
   render() {
@@ -42,7 +45,7 @@ ReactDom.render(<App />, document.querySelector('#id'));
 这里简单地调用了_renderSubtreeIntoContainer，初始化的时候肯定没有parentComponent，只有container也就是我们的挂载点，
 nextElement就是我们现在要渲染的Component
 
-```
+```javascript
 _renderSubtreeIntoContainer: function(parentComponent, nextElement, container, callback) {
     validateCallback(callback, 'ReactDOM.render');
    
